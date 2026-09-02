@@ -3401,7 +3401,10 @@ async function inviteTeamMember(){
     return;
   }
 
-  if(!session?.access_token){
+  const { data: { session: currentSession } } =
+    await db.auth.getSession();
+
+  if(!currentSession?.access_token){
     toast('Please sign in again.');
     return;
   }
@@ -3414,13 +3417,12 @@ async function inviteTeamMember(){
       'https://gqvktmsyrnhaklyslzxk.supabase.co/functions/v1/invite-team-member',
       {
         method: 'POST',
-
+        mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + session.access_token,
+          'Authorization': `Bearer ${currentSession.access_token}`,
           'apikey': SUPABASE_KEY
         },
-
         body: JSON.stringify({
           email: email,
           role: 'annotator'
@@ -3428,7 +3430,15 @@ async function inviteTeamMember(){
       }
     );
 
-    const result = await response.json();
+    const text = await response.text();
+
+    let result;
+
+    try{
+      result = JSON.parse(text);
+    }catch{
+      result = { error: text };
+    }
 
     if(!response.ok){
       throw new Error(
