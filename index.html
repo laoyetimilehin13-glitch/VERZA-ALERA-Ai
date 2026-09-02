@@ -3392,18 +3392,66 @@ function teamPage(){
   `;
 }
 
-function inviteTeamMember(){
+async function inviteTeamMember(){
 
-  const email=$('inviteEmail')?.value.trim();
+  const email = $('inviteEmail')?.value.trim().toLowerCase();
 
   if(!email){
     toast('Enter an email address.');
     return;
   }
 
-  toast(
-    'Invitation workflow is ready for email-provider integration.'
-  );
+  if(!session?.access_token){
+    toast('Please sign in again.');
+    return;
+  }
+
+  try{
+
+    toast('Sending invitation...');
+
+    const response = await fetch(
+      'https://gqvktmsyrnhaklyslzxk.supabase.co/functions/v1/invite-team-member',
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+          'apikey': SUPABASE_KEY
+        },
+
+        body: JSON.stringify({
+          email: email,
+          role: 'annotator'
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if(!response.ok){
+      throw new Error(
+        result.error || 'Could not send invitation.'
+      );
+    }
+
+    toast('Invitation sent to ' + email + '.');
+
+    if($('inviteEmail')){
+      $('inviteEmail').value = '';
+    }
+
+  }catch(error){
+
+    console.error('Team invitation error:', error);
+
+    toast(
+      error.message ||
+      'Could not send invitation.'
+    );
+
+  }
 }
 
 /* ==========================================================
