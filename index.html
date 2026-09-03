@@ -3460,7 +3460,50 @@ async function inviteTeamMember(){
       error.message ||
       'Could not send invitation.'
     );
+<form id="inviteForm">
+  <input
+    type="email"
+    id="inviteEmail"
+    placeholder="Enter email address"
+    required
+  />
 
+  <button type="submit">
+    Send Invitation
+  </button>
+
+  <p id="inviteMessage"></p>
+</form>
+
+<script>
+  document.getElementById("inviteForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById("inviteEmail").value.trim();
+    const message = document.getElementById("inviteMessage");
+
+    message.textContent = "Sending invitation...";
+
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "invite-user",
+        {
+          body: { email }
+        }
+      );
+
+      if (error) throw error;
+
+      message.textContent = "Invitation sent successfully!";
+      document.getElementById("inviteForm").reset();
+
+    } catch (error) {
+      console.error(error);
+      message.textContent =
+        error.message || "Unable to send invitation.";
+    }
+  });
+</script>
   }
 }
 
